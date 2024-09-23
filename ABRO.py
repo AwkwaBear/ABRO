@@ -1,49 +1,46 @@
-import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QComboBox, QListWidget, QPushButton, QFileDialog
+import customtkinter as ctk
+from tkinter import filedialog
 
-class DirectoryExplorer(QWidget):
+class DirectoryExplorer(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.initUI()
         
     def initUI(self):
-        # Layout
-        layout = QVBoxLayout()
+        # Set window properties
+        self.title("Directory Explorer")
+        self.geometry("400x300")
         
-        # Dropdown for directories
-        self.dirLabel = QLabel('Select Directory:')
-        layout.addWidget(self.dirLabel)
+        # Dropdown for directories (Label and OptionMenu)
+        self.dirLabel = ctk.CTkLabel(self, text='Select Directory:')
+        self.dirLabel.pack(pady=10)
         
-        self.dirComboBox = QComboBox()
-        self.dirComboBox.addItem("Select a directory...")
-        layout.addWidget(self.dirComboBox)
+        self.selected_directory = ctk.StringVar(value="Select a directory...")
+        self.dirComboBox = ctk.CTkOptionMenu(self, variable=self.selected_directory, values=["Select a directory..."])
+        self.dirComboBox.pack(pady=10)
         
         # Button to open directory dialog
-        self.dirButton = QPushButton('Browse...')
-        self.dirButton.clicked.connect(self.browse_directory)
-        layout.addWidget(self.dirButton)
+        self.dirButton = ctk.CTkButton(self, text='Browse...', command=self.browse_directory)
+        self.dirButton.pack(pady=10)
         
-        # Sidebar list of subdirectories
-        self.subdirList = QListWidget()
-        layout.addWidget(self.subdirList)
-        
-        # Set layout
-        self.setLayout(layout)
-        self.setWindowTitle('Directory Explorer')
-        
+        # Sidebar list of subdirectories (CTkListbox does not exist, so using CTkTextbox for displaying subdirectories)
+        self.subdirList = ctk.CTkTextbox(self, height=150)
+        self.subdirList.pack(pady=10, padx=10, fill='both', expand=True)
+    
     def browse_directory(self):
         # Open directory selection dialog
-        directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        directory = filedialog.askdirectory(title="Select Directory")
         
         if directory:
-            self.dirComboBox.addItem(directory)
-            self.dirComboBox.setCurrentText(directory)
+            # Add the directory to the OptionMenu and select it
+            self.dirComboBox.configure(values=[directory])
+            self.selected_directory.set(directory)
             self.list_subdirectories(directory)
     
     def list_subdirectories(self, directory):
-        # Clear existing list
-        self.subdirList.clear()
+        # Clear existing list in the Textbox
+        self.subdirList.delete("1.0", "end")
         
         # List all subdirectories in the selected directory
         subdirs = []
@@ -51,14 +48,20 @@ class DirectoryExplorer(QWidget):
             for dir in dirs:
                 subdirs.append(os.path.join(root, dir))
         
-        # Populate the subdirectory list in the sidebar
+        # Populate the subdirectory list in the Textbox
         for subdir in subdirs:
-            self.subdirList.addItem(subdir)
+            self.subdirList.insert("end", subdir + "\n")
 
 
 # Main function to run the application
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    explorer = DirectoryExplorer()
-    explorer.show()
-    sys.exit(app.exec_())
+    # Set dark mode appearance globally
+    ctk.set_appearance_mode("dark")  # Options: "light", "dark", or "system"
+    
+    # Set default color theme
+    ctk.set_default_color_theme("dark-blue")  # Built-in themes: "blue", "green", or "dark-blue"
+
+    
+    # Create and run the application
+    app = DirectoryExplorer()
+    app.mainloop()
